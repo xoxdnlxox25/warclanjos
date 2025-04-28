@@ -170,4 +170,7 @@ body {
 .oculto {
     display: none;
 }
+@media (max-width: 768px) {
+  /* Ajustes para móviles */
+}
 
