@@ -33,14 +33,34 @@
         </div>
     </div>
 
-    <!-- Notificación de finalización -->
     <div id="notificacion" class="notificacion oculto">¡El juego ha terminado!</div>
 
-    <!-- 🔥 Conexión a Firebase antes de cargar tu script -->
+    <!-- 🔥 SDK de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <!-- Tu código principal -->
+    <!-- 🔥 Inicializar Firebase -->
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyAQ2njMvEKaURHdQ1YNPmAPB9hXsz0u1AU",
+        authDomain: "danielito-22118.firebaseapp.com",
+        databaseURL: "https://danielito-22118-default-rtdb.firebaseio.com",
+        projectId: "danielito-22118",
+        storageBucket: "danielito-22118.appspot.com",
+        messagingSenderId: "264146469968",
+        appId: "1:264146469968:web:a71c1211aa01910493bd55"
+      };
+      try {
+          firebase.initializeApp(firebaseConfig);
+          window.database = firebase.database();
+          console.log("✅ Firebase conectado correctamente");
+      } catch (error) {
+          console.error("❌ Error conectando a Firebase:", error);
+          alert("Error conectando a Firebase. Verifica tu configuración.");
+      }
+    </script>
+
+    <!-- 🔥 Tu código de juego -->
     <script src="script.js"></script>
 </body>
 </html>
