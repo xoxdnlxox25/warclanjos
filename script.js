@@ -1,15 +1,94 @@
+// --- CONEXIÓN A FIREBASE ---
+const firebaseConfig = {
+    // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAQ2njMvEKaURHdQ1YNPmAPB9hXsz0u1AU",
+  authDomain: "danielito-22118.firebaseapp.com",
+  databaseURL: "https://danielito-22118.firebaseio.com",
+  projectId: "danielito-22118",
+  storageBucket: "danielito-22118.firebasestorage.app",
+  messagingSenderId: "264146469968",
+  appId: "1:264146469968:web:a71c1211aa01910493bd55"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+  // 🔥 Aquí pegas tu firebaseConfig 🔥
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+// --- VARIABLES GLOBALES ---
 const botonBatalla = document.getElementById('botonBatalla');
 const inicio = document.getElementById('inicio');
 const campoBatalla = document.getElementById('campoBatalla');
 const notificacion = document.getElementById('notificacion');
 
+let cartaArrastrando = null;
+let idJugador = "jugador_" + Math.floor(Math.random() * 100000);
+let salaID = null;
+let esJugador1 = false;
+
+// --- FUNCIONES DE FLUJO DE JUEGO ---
+
 botonBatalla.addEventListener('click', () => {
-    inicio.classList.add('oculto');
-    campoBatalla.classList.remove('oculto');
-    reiniciarCampo();
+    buscarOSalaNueva();
 });
 
-let cartaArrastrando = null;
+function buscarOSalaNueva() {
+    database.ref('salas').once('value', snapshot => {
+        let salas = snapshot.val();
+        if (salas) {
+            for (let key in salas) {
+                if (salas[key].estado === "esperando") {
+                    salaID = key;
+                    database.ref('salas/' + salaID).update({
+                        estado: "jugando",
+                        jugador2: idJugador
+                    });
+                    esJugador1 = false;
+                    comenzarBatalla();
+                    return;
+                }
+            }
+        }
+        crearSalaNueva();
+    });
+}
+
+function crearSalaNueva() {
+    salaID = database.ref('salas').push().key;
+    database.ref('salas/' + salaID).set({
+        estado: "esperando",
+        jugador1: idJugador
+    });
+    esJugador1 = true;
+    esperarJugador();
+}
+
+function esperarJugador() {
+    database.ref('salas/' + salaID).on('value', snapshot => {
+        const sala = snapshot.val();
+        if (sala.estado === "jugando") {
+            comenzarBatalla();
+        }
+    });
+}
+
+function comenzarBatalla() {
+    inicio.classList.add('oculto');
+    campoBatalla.classList.remove('oculto');
+    inicializarCartas();
+    escucharSoldados();
+}
+
+// --- FUNCIONES DE CARTAS Y SOLDADOS ---
 
 function inicializarCartas() {
     document.querySelectorAll('.carta').forEach(carta => {
@@ -39,218 +118,52 @@ document.addEventListener('dragover', (e) => {
 document.addEventListener('drop', (e) => {
     e.preventDefault();
     if (cartaArrastrando) {
-        crearSoldado(e.pageX, e.pageY, "verde");
+        lanzarSoldado(e.pageX, e.pageY);
         cartaArrastrando.remove();
         cartaArrastrando = null;
     }
 });
 
-function crearSoldado(x, y, color) {
-    const soldado = document.createElement('div');
-    soldado.classList.add('soldado');
-    if (color === "rojo") soldado.classList.add('rojo');
-
-    const barraVida = document.createElement('div');
-    barraVida.classList.add('barra-vida');
-    soldado.appendChild(barraVida);
-
-    soldado.style.left = x + 'px';
-    soldado.style.top = y + 'px';
-    soldado.dataset.color = color;
-    soldado.dataset.vida = "100";
-    soldado.dataset.moviendo = "true";
-    campoBatalla.appendChild(soldado);
-
-    moverSoldado(soldado);
+function lanzarSoldado(x, y) {
+    const nuevoSoldado = {
+        id: Math.random().toString(36).substr(2, 9),
+        x: x,
+        y: y,
+        color: idJugador
+    };
+    database.ref(`salas/${salaID}/soldados/${nuevoSoldado.id}`).set(nuevoSoldado);
 }
 
-function moverSoldado(soldado) {
-    let velocidad = soldado.dataset.color === "verde" ? -2 : 2;
-
-    let intervalo = setInterval(() => {
-        if (soldado.dataset.moviendo === "true") {
-            let top = parseInt(soldado.style.top);
-            top += velocidad;
-            soldado.style.top = top + 'px';
-
-            if (top < 0 || top > window.innerHeight) {
-                soldado.remove();
-                clearInterval(intervalo);
-            }
-
-            detectarObjetivoCercano(soldado);
-        }
-    }, 20);
-}
-
-function detectarObjetivoCercano(soldado) {
-    if (soldado.dataset.moviendo !== "true") return;
-
-    const enemigos = Array.from(document.querySelectorAll('.soldado')).filter(
-        s => s.dataset.color !== soldado.dataset.color
-    );
-
-    let objetivo = enemigos.find(enemigo => {
-        return Math.hypot(
-            enemigo.offsetLeft - soldado.offsetLeft,
-            enemigo.offsetTop - soldado.offsetTop
-        ) < 80;
-    });
-
-    if (objetivo) {
-        soldado.dataset.moviendo = "false";
-        disparar(soldado, objetivo);
-        return;
-    }
-
-    const torres = document.querySelectorAll(`.torre.${soldado.dataset.color === "verde" ? "roja" : "azul"}`);
-    objetivo = Array.from(torres).find(torre => {
-        return Math.hypot(
-            torre.getBoundingClientRect().x + torre.offsetWidth / 2 - soldado.offsetLeft,
-            torre.getBoundingClientRect().y + torre.offsetHeight / 2 - soldado.offsetTop
-        ) < 100;
-    });
-
-    if (objetivo) {
-        soldado.dataset.moviendo = "false";
-        disparar(soldado, objetivo);
-    }
-}
-
-function disparar(origen, objetivo) {
-    const intervaloDisparo = setInterval(() => {
-        if (!document.body.contains(origen)) {
-            clearInterval(intervaloDisparo);
-            return;
-        }
-
-        if (!document.body.contains(objetivo)) {
-            clearInterval(intervaloDisparo);
-            origen.dataset.moviendo = "true"; // Sigue avanzando
-            return;
-        }
-
-        const bala = document.createElement('div');
-        bala.classList.add('bala');
-        bala.style.left = origen.offsetLeft + 'px';
-        bala.style.top = origen.offsetTop + 'px';
-        campoBatalla.appendChild(bala);
-
-        const dx = (objetivo.offsetLeft + objetivo.offsetWidth / 2) - origen.offsetLeft;
-        const dy = (objetivo.offsetTop + objetivo.offsetHeight / 2) - origen.offsetTop;
-        const distancia = Math.hypot(dx, dy);
-        const vx = dx / distancia;
-        const vy = dy / distancia;
-
-        const moverBala = setInterval(() => {
-            bala.style.left = (bala.offsetLeft + vx * 5) + 'px';
-            bala.style.top = (bala.offsetTop + vy * 5) + 'px';
-
-            const distanciaActual = Math.hypot(
-                (objetivo.offsetLeft + objetivo.offsetWidth / 2) - bala.offsetLeft,
-                (objetivo.offsetTop + objetivo.offsetHeight / 2) - bala.offsetTop
-            );
-
-            if (distanciaActual < 10) {
-                bala.remove();
-                hacerDaño(objetivo, 20, origen);
-                clearInterval(moverBala);
-            }
-        }, 20);
-    }, 1000);
-}
-
-function hacerDaño(objetivo, cantidad, atacante) {
-    if (objetivo.dataset.vida) {
-        let vidaActual = parseInt(objetivo.dataset.vida);
-        vidaActual -= cantidad;
-        objetivo.dataset.vida = vidaActual;
-        const barra = objetivo.querySelector('.barra-vida');
-        if (barra) barra.style.width = (vidaActual / 100 * 40) + "px";
-
-        if (vidaActual <= 0) {
-            objetivo.remove();
-            if (atacante) atacante.dataset.moviendo = "true";
-            verificarFinDelJuego();
-        }
-    }
-}
-
-function verificarFinDelJuego() {
-    const torresRojas = document.querySelectorAll('.torre.roja');
-    const torresAzules = document.querySelectorAll('.torre.azul');
-
-    if (torresRojas.length === 0 || torresAzules.length === 0) {
-        setTimeout(() => {
-            // Mostrar notificación
-            notificacion.classList.remove('oculto');
-
-            // Eliminar soldados, torres y balas
-            document.querySelectorAll('.soldado, .torre, .bala').forEach(elemento => {
-                elemento.remove();
-            });
-
-            // Ocultar notificación y volver al inicio después de 3 segundos
-            setTimeout(() => {
-                notificacion.classList.add('oculto');
-                campoBatalla.classList.add('oculto');
-                inicio.classList.remove('oculto');
-            }, 3000);
-
-        }, 500);
-    }
-}
-
-function generarSoldadosEnemigos() {
-    setInterval(() => {
-        const torresAzules = document.querySelectorAll('.torre.azul');
-        if (torresAzules.length > 0) {
-            const randomTorre = torresAzules[Math.floor(Math.random() * torresAzules.length)];
-            const x = randomTorre.offsetLeft + randomTorre.offsetWidth / 2;
-            const y = 0;
-            crearSoldado(x, y, "rojo");
-        }
-    }, 5000);
-}
-
-function crearBarrasDeVidaTorres() {
-    const torres = document.querySelectorAll('.torre');
-    torres.forEach(torre => {
-        const barraVida = document.createElement('div');
-        barraVida.classList.add('barra-vida');
-        torre.appendChild(barraVida);
-        torre.dataset.vida = "200";
+function escucharSoldados() {
+    database.ref(`salas/${salaID}/soldados`).on('child_added', (snapshot) => {
+        const soldado = snapshot.val();
+        mostrarSoldado(soldado);
     });
 }
 
-function reiniciarCampo() {
-    campoBatalla.innerHTML = `
-    <div class="campo-juego">
-        <div class="fila torres-rojas">
-            <div class="torre roja"></div>
-            <div class="torre roja grande"></div>
-            <div class="torre roja"></div>
-        </div>
-        <div class="espacio"></div>
-        <div class="fila torres-azules">
-            <div class="torre azul"></div>
-            <div class="torre azul grande"></div>
-            <div class="torre azul"></div>
-        </div>
-    </div>
-    <div class="cartas">
-        <div class="carta" draggable="true">Carta 1</div>
-        <div class="carta" draggable="true">Carta 2</div>
-        <div class="carta" draggable="true">Carta 3</div>
-        <div class="carta" draggable="true">Carta 4</div>
-    </div>
-    `;
-    crearBarrasDeVidaTorres();
-    inicializarCartas();
+function mostrarSoldado(soldado) {
+    const nuevo = document.createElement('div');
+    nuevo.classList.add('soldado');
+    if (soldado.color !== idJugador) {
+        nuevo.classList.add('rojo');
+    }
+    nuevo.style.left = soldado.x + 'px';
+    nuevo.style.top = soldado.y + 'px';
+    campoBatalla.appendChild(nuevo);
 }
 
+// --- FINAL DEL JUEGO (POR AHORA NO DETECTAMOS QUIÉN GANA, PERO PODEMOS AGREGARLO) ---
+
+function finalizarJuego() {
+    notificacion.classList.remove('oculto');
+    setTimeout(() => {
+        notificacion.classList.add('oculto');
+        campoBatalla.classList.add('oculto');
+        inicio.classList.remove('oculto');
+    }, 3000);
+}
+
+// --- INICIALIZAR ---
 window.addEventListener('load', () => {
-    crearBarrasDeVidaTorres();
-    inicializarCartas();
-    generarSoldadosEnemigos();
+    console.log("Juego cargado y esperando jugadores...");
 });
