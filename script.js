@@ -22,7 +22,8 @@ let cartaArrastrando = null;
 let idJugador = "jugador_" + Math.floor(Math.random() * 100000);
 let salaID = null;
 let esJugador1 = false;
-let soldadosEnPantalla = {}; // NUEVO
+let soldadosEnPantalla = {};
+let torres = [];
 
 // --- FLUJO DE JUEGO ---
 botonBatalla.addEventListener('click', () => {
@@ -73,8 +74,9 @@ function comenzarBatalla() {
     inicio.classList.add('oculto');
     campoBatalla.classList.remove('oculto');
     inicializarCartas();
+    inicializarTorres();
     escucharSoldados();
-    animarSoldados(); // NUEVO
+    animarSoldados();
 }
 
 // --- CARTAS Y SOLDADOS ---
@@ -145,24 +147,59 @@ function mostrarSoldado(soldado) {
     };
 }
 
-// --- MOVIMIENTO AUTOMÁTICO ---
+function inicializarTorres() {
+    torres = Array.from(document.querySelectorAll('.torre'));
+}
+
 function animarSoldados() {
     setInterval(() => {
         for (let id in soldadosEnPantalla) {
             const soldado = soldadosEnPantalla[id];
-            let rect = soldado.elemento.getBoundingClientRect();
-            let posY = parseInt(soldado.elemento.style.top);
-
-            // Los soldados verdes suben, los rojos bajan
-            if (soldado.color === idJugador) {
-                posY -= 1; // Subir
-            } else {
-                posY += 1; // Bajar
+            if (!soldado.objetivo) {
+                const torreCercana = buscarTorreCercana(soldado.elemento);
+                if (torreCercana) {
+                    soldado.objetivo = torreCercana;
+                }
             }
-
-            soldado.elemento.style.top = posY + "px";
+            if (soldado.objetivo) {
+                moverSoldadoHaciaTorre(soldado);
+            }
         }
-    }, 30);
+    }, 50);
+}
+
+function buscarTorreCercana(soldado) {
+    let soldadoRect = soldado.getBoundingClientRect();
+    for (let torre of torres) {
+        let torreRect = torre.getBoundingClientRect();
+        let distancia = Math.hypot(
+            (soldadoRect.left - torreRect.left),
+            (soldadoRect.top - torreRect.top)
+        );
+        if (distancia < 150) {
+            return torre;
+        }
+    }
+    return null;
+}
+
+function moverSoldadoHaciaTorre(soldado) {
+    let soldadoEl = soldado.elemento;
+    let torreEl = soldado.objetivo;
+
+    let soldadoRect = soldadoEl.getBoundingClientRect();
+    let torreRect = torreEl.getBoundingClientRect();
+
+    let dx = torreRect.left - soldadoRect.left;
+    let dy = torreRect.top - soldadoRect.top;
+    let distancia = Math.hypot(dx, dy);
+
+    if (distancia > 30) {
+        soldadoEl.style.left = parseInt(soldadoEl.style.left) + dx / distancia + 'px';
+        soldadoEl.style.top = parseInt(soldadoEl.style.top) + dy / distancia + 'px';
+    } else {
+        // Aquí luego podemos agregar el disparo
+    }
 }
 
 // --- FINAL DEL JUEGO ---
@@ -179,3 +216,4 @@ function finalizarJuego() {
 window.addEventListener('load', () => {
     console.log("Juego cargado y esperando jugadores...");
 });
+
