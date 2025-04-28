@@ -9,7 +9,6 @@ const firebaseConfig = {
   appId: "1:264146469968:web:a71c1211aa01910493bd55"
 };
 
-// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
@@ -23,6 +22,7 @@ let cartaArrastrando = null;
 let idJugador = "jugador_" + Math.floor(Math.random() * 100000);
 let salaID = null;
 let esJugador1 = false;
+let soldadosEnPantalla = {}; // NUEVO
 
 // --- FLUJO DE JUEGO ---
 botonBatalla.addEventListener('click', () => {
@@ -74,6 +74,7 @@ function comenzarBatalla() {
     campoBatalla.classList.remove('oculto');
     inicializarCartas();
     escucharSoldados();
+    animarSoldados(); // NUEVO
 }
 
 // --- CARTAS Y SOLDADOS ---
@@ -131,12 +132,37 @@ function escucharSoldados() {
 function mostrarSoldado(soldado) {
     const nuevo = document.createElement('div');
     nuevo.classList.add('soldado');
+    nuevo.dataset.id = soldado.id;
     if (soldado.color !== idJugador) {
         nuevo.classList.add('rojo');
     }
     nuevo.style.left = soldado.x + 'px';
     nuevo.style.top = soldado.y + 'px';
     campoBatalla.appendChild(nuevo);
+    soldadosEnPantalla[soldado.id] = {
+        elemento: nuevo,
+        color: soldado.color
+    };
+}
+
+// --- MOVIMIENTO AUTOMÁTICO ---
+function animarSoldados() {
+    setInterval(() => {
+        for (let id in soldadosEnPantalla) {
+            const soldado = soldadosEnPantalla[id];
+            let rect = soldado.elemento.getBoundingClientRect();
+            let posY = parseInt(soldado.elemento.style.top);
+
+            // Los soldados verdes suben, los rojos bajan
+            if (soldado.color === idJugador) {
+                posY -= 1; // Subir
+            } else {
+                posY += 1; // Bajar
+            }
+
+            soldado.elemento.style.top = posY + "px";
+        }
+    }, 30);
 }
 
 // --- FINAL DEL JUEGO ---
