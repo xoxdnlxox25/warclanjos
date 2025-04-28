@@ -1,17 +1,3 @@
-// --- CONEXIÓN A FIREBASE ---
-const firebaseConfig = {
-  apiKey: "AIzaSyAQ2njMvEKaURHdQ1YNPmAPB9hXsz0u1AU",
-  authDomain: "danielito-22118.firebaseapp.com",
-  databaseURL: "https://danielito-22118-default-rtdb.firebaseio.com",
-  projectId: "danielito-22118",
-  storageBucket: "danielito-22118.appspot.com",
-  messagingSenderId: "264146469968",
-  appId: "1:264146469968:web:a71c1211aa01910493bd55"
-};
-
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-
 // --- VARIABLES GLOBALES ---
 const botonBatalla = document.getElementById('botonBatalla');
 const inicio = document.getElementById('inicio');
@@ -32,7 +18,7 @@ botonBatalla.addEventListener('click', () => {
 });
 
 function buscarOSalaNueva() {
-    database.ref('salas').once('value', snapshot => {
+    database.ref('salas').once('value').then(snapshot => {
         let salas = snapshot.val();
         if (salas) {
             for (let key in salas) {
@@ -49,6 +35,9 @@ function buscarOSalaNueva() {
             }
         }
         crearSalaNueva();
+    }).catch(error => {
+        console.error("Error buscando salas:", error);
+        alert("Error conectando al juego. Verifica tu internet y vuelve a intentar.");
     });
 }
 
@@ -81,7 +70,7 @@ function comenzarBatalla() {
     animarBalas();
 }
 
-// --- CARTAS Y SOLDADOS ---
+// --- FUNCIONES DE JUEGO ---
 function inicializarCartas() {
     document.querySelectorAll('.carta').forEach(carta => {
         carta.addEventListener('dragstart', () => {
@@ -127,7 +116,7 @@ function lanzarSoldado(x, y) {
 }
 
 function escucharSoldados() {
-    database.ref(`salas/${salaID}/soldados`).on('child_added', (snapshot) => {
+    database.ref(`salas/${salaID}/soldados`).on('child_added', snapshot => {
         const soldado = snapshot.val();
         mostrarSoldado(soldado);
     });
@@ -274,19 +263,6 @@ function mostrarVictoria() {
     }, 4000);
 }
 
-// --- FINAL DEL JUEGO ---
-function finalizarJuego() {
-    notificacion.classList.remove('oculto');
-    setTimeout(() => {
-        notificacion.classList.add('oculto');
-        campoBatalla.classList.add('oculto');
-        inicio.classList.remove('oculto');
-    }, 3000);
-}
-
-// --- INICIALIZAR ---
 window.addEventListener('load', () => {
     console.log("Juego cargado y esperando jugadores...");
 });
-
-
