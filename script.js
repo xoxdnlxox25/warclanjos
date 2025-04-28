@@ -24,6 +24,7 @@ let salaID = null;
 let esJugador1 = false;
 let soldadosEnPantalla = {};
 let torres = [];
+let balas = [];
 
 // --- FLUJO DE JUEGO ---
 botonBatalla.addEventListener('click', () => {
@@ -77,6 +78,7 @@ function comenzarBatalla() {
     inicializarTorres();
     escucharSoldados();
     animarSoldados();
+    animarBalas();
 }
 
 // --- CARTAS Y SOLDADOS ---
@@ -143,7 +145,9 @@ function mostrarSoldado(soldado) {
     campoBatalla.appendChild(nuevo);
     soldadosEnPantalla[soldado.id] = {
         elemento: nuevo,
-        color: soldado.color
+        color: soldado.color,
+        objetivo: null,
+        tiempoDisparo: 0
     };
 }
 
@@ -162,7 +166,7 @@ function animarSoldados() {
                 }
             }
             if (soldado.objetivo) {
-                moverSoldadoHaciaTorre(soldado);
+                atacarTorre(soldado);
             }
         }
     }, 50);
@@ -183,23 +187,49 @@ function buscarTorreCercana(soldado) {
     return null;
 }
 
-function moverSoldadoHaciaTorre(soldado) {
-    let soldadoEl = soldado.elemento;
-    let torreEl = soldado.objetivo;
-
-    let soldadoRect = soldadoEl.getBoundingClientRect();
-    let torreRect = torreEl.getBoundingClientRect();
-
-    let dx = torreRect.left - soldadoRect.left;
-    let dy = torreRect.top - soldadoRect.top;
-    let distancia = Math.hypot(dx, dy);
-
-    if (distancia > 30) {
-        soldadoEl.style.left = parseInt(soldadoEl.style.left) + dx / distancia + 'px';
-        soldadoEl.style.top = parseInt(soldadoEl.style.top) + dy / distancia + 'px';
+function atacarTorre(soldado) {
+    if (soldado.tiempoDisparo <= 0) {
+        dispararBala(soldado.elemento, soldado.objetivo);
+        soldado.tiempoDisparo = 30; // Intervalo entre disparos
     } else {
-        // Aquí luego podemos agregar el disparo
+        soldado.tiempoDisparo--;
     }
+}
+
+function dispararBala(origen, objetivo) {
+    const bala = document.createElement('div');
+    bala.classList.add('bala');
+    bala.style.left = origen.style.left;
+    bala.style.top = origen.style.top;
+    campoBatalla.appendChild(bala);
+
+    balas.push({
+        elemento: bala,
+        objetivo: objetivo
+    });
+}
+
+function animarBalas() {
+    setInterval(() => {
+        balas.forEach((bala, index) => {
+            if (!bala.objetivo) return;
+
+            let balaRect = bala.elemento.getBoundingClientRect();
+            let objetivoRect = bala.objetivo.getBoundingClientRect();
+
+            let dx = objetivoRect.left - balaRect.left;
+            let dy = objetivoRect.top - balaRect.top;
+            let distancia = Math.hypot(dx, dy);
+
+            if (distancia > 5) {
+                bala.elemento.style.left = parseInt(bala.elemento.style.left) + dx / distancia * 5 + 'px';
+                bala.elemento.style.top = parseInt(bala.elemento.style.top) + dy / distancia * 5 + 'px';
+            } else {
+                bala.elemento.remove();
+                balas.splice(index, 1);
+            }
+        });
+    }, 30);
 }
 
 // --- FINAL DEL JUEGO ---
