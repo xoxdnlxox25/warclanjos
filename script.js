@@ -1,26 +1,15 @@
 // --- CONEXIÓN A FIREBASE ---
 const firebaseConfig = {
-    // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
   apiKey: "AIzaSyAQ2njMvEKaURHdQ1YNPmAPB9hXsz0u1AU",
   authDomain: "danielito-22118.firebaseapp.com",
-  databaseURL: "https://danielito-22118.firebaseio.com",
+  databaseURL: "https://danielito-22118-default-rtdb.firebaseio.com",
   projectId: "danielito-22118",
-  storageBucket: "danielito-22118.firebasestorage.app",
+  storageBucket: "danielito-22118.appspot.com",
   messagingSenderId: "264146469968",
   appId: "1:264146469968:web:a71c1211aa01910493bd55"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-  // 🔥 Aquí pegas tu firebaseConfig 🔥
-};
-
+// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
@@ -35,8 +24,7 @@ let idJugador = "jugador_" + Math.floor(Math.random() * 100000);
 let salaID = null;
 let esJugador1 = false;
 
-// --- FUNCIONES DE FLUJO DE JUEGO ---
-
+// --- FLUJO DE JUEGO ---
 botonBatalla.addEventListener('click', () => {
     buscarOSalaNueva();
 });
@@ -88,8 +76,7 @@ function comenzarBatalla() {
     escucharSoldados();
 }
 
-// --- FUNCIONES DE CARTAS Y SOLDADOS ---
-
+// --- CARTAS Y SOLDADOS ---
 function inicializarCartas() {
     document.querySelectorAll('.carta').forEach(carta => {
         carta.addEventListener('dragstart', () => {
@@ -152,8 +139,7 @@ function mostrarSoldado(soldado) {
     campoBatalla.appendChild(nuevo);
 }
 
-// --- FINAL DEL JUEGO (POR AHORA NO DETECTAMOS QUIÉN GANA, PERO PODEMOS AGREGARLO) ---
-
+// --- FINAL DEL JUEGO ---
 function finalizarJuego() {
     notificacion.classList.remove('oculto');
     setTimeout(() => {
