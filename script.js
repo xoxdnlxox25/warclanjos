@@ -152,7 +152,12 @@ function mostrarSoldado(soldado) {
 }
 
 function inicializarTorres() {
-    torres = Array.from(document.querySelectorAll('.torre'));
+    torres = Array.from(document.querySelectorAll('.torre')).map(torre => {
+        return {
+            elemento: torre,
+            vida: 100
+        };
+    });
 }
 
 function animarSoldados() {
@@ -175,7 +180,7 @@ function animarSoldados() {
 function buscarTorreCercana(soldado) {
     let soldadoRect = soldado.getBoundingClientRect();
     for (let torre of torres) {
-        let torreRect = torre.getBoundingClientRect();
+        let torreRect = torre.elemento.getBoundingClientRect();
         let distancia = Math.hypot(
             (soldadoRect.left - torreRect.left),
             (soldadoRect.top - torreRect.top)
@@ -215,7 +220,7 @@ function animarBalas() {
             if (!bala.objetivo) return;
 
             let balaRect = bala.elemento.getBoundingClientRect();
-            let objetivoRect = bala.objetivo.getBoundingClientRect();
+            let objetivoRect = bala.objetivo.elemento.getBoundingClientRect();
 
             let dx = objetivoRect.left - balaRect.left;
             let dy = objetivoRect.top - balaRect.top;
@@ -225,11 +230,20 @@ function animarBalas() {
                 bala.elemento.style.left = parseInt(bala.elemento.style.left) + dx / distancia * 5 + 'px';
                 bala.elemento.style.top = parseInt(bala.elemento.style.top) + dy / distancia * 5 + 'px';
             } else {
+                // Impacto
                 bala.elemento.remove();
                 balas.splice(index, 1);
+                dañoATorre(bala.objetivo);
             }
         });
     }, 30);
+}
+
+function dañoATorre(torre) {
+    torre.vida -= 10;
+    if (torre.vida <= 0) {
+        torre.elemento.remove();
+    }
 }
 
 // --- FINAL DEL JUEGO ---
@@ -246,4 +260,3 @@ function finalizarJuego() {
 window.addEventListener('load', () => {
     console.log("Juego cargado y esperando jugadores...");
 });
-
