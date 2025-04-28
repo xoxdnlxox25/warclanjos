@@ -153,8 +153,12 @@ function mostrarSoldado(soldado) {
 
 function inicializarTorres() {
     torres = Array.from(document.querySelectorAll('.torre')).map(torre => {
+        const barraVida = document.createElement('div');
+        barraVida.classList.add('barra-vida');
+        torre.appendChild(barraVida);
         return {
             elemento: torre,
+            barra: barraVida,
             vida: 100
         };
     });
@@ -195,7 +199,7 @@ function buscarTorreCercana(soldado) {
 function atacarTorre(soldado) {
     if (soldado.tiempoDisparo <= 0) {
         dispararBala(soldado.elemento, soldado.objetivo);
-        soldado.tiempoDisparo = 30; // Intervalo entre disparos
+        soldado.tiempoDisparo = 30;
     } else {
         soldado.tiempoDisparo--;
     }
@@ -230,7 +234,6 @@ function animarBalas() {
                 bala.elemento.style.left = parseInt(bala.elemento.style.left) + dx / distancia * 5 + 'px';
                 bala.elemento.style.top = parseInt(bala.elemento.style.top) + dy / distancia * 5 + 'px';
             } else {
-                // Impacto
                 bala.elemento.remove();
                 balas.splice(index, 1);
                 dañoATorre(bala.objetivo);
@@ -241,9 +244,34 @@ function animarBalas() {
 
 function dañoATorre(torre) {
     torre.vida -= 10;
+    actualizarBarraVida(torre);
     if (torre.vida <= 0) {
         torre.elemento.remove();
+        torres = torres.filter(t => t !== torre);
+        verificarFinDePartida();
     }
+}
+
+function actualizarBarraVida(torre) {
+    if (torre.barra) {
+        torre.barra.style.width = torre.vida + '%';
+    }
+}
+
+function verificarFinDePartida() {
+    if (torres.length === 0) {
+        mostrarVictoria();
+    }
+}
+
+function mostrarVictoria() {
+    notificacion.textContent = "¡Victoria!";
+    notificacion.classList.remove('oculto');
+    setTimeout(() => {
+        notificacion.classList.add('oculto');
+        campoBatalla.classList.add('oculto');
+        inicio.classList.remove('oculto');
+    }, 4000);
 }
 
 // --- FINAL DEL JUEGO ---
@@ -260,3 +288,5 @@ function finalizarJuego() {
 window.addEventListener('load', () => {
     console.log("Juego cargado y esperando jugadores...");
 });
+
+
