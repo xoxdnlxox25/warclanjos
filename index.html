@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Batalla</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="inicio" class="pantalla">
+        <button id="botonBatalla">Batalla</button>
+    </div>
+
+    <div id="campoBatalla" class="pantalla oculto">
+        <div class="campo-juego">
+            <div class="fila torres-rojas">
+                <div class="torre roja"></div>
+                <div class="torre roja grande"></div>
+                <div class="torre roja"></div>
+            </div>
+            <div class="espacio"></div>
+            <div class="fila torres-azules">
+                <div class="torre azul"></div>
+                <div class="torre azul grande"></div>
+                <div class="torre azul"></div>
+            </div>
+        </div>
+
+        <div class="cartas">
+            <div class="carta" draggable="true">Carta 1</div>
+            <div class="carta" draggable="true">Carta 2</div>
+            <div class="carta" draggable="true">Carta 3</div>
+            <div class="carta" draggable="true">Carta 4</div>
+        </div>
+    </div>
+
+    <!-- Notificación de finalización -->
+    <div id="notificacion" class="notificacion oculto">¡El juego ha terminado!</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
